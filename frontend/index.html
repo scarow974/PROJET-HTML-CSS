@@ -1222,56 +1222,66 @@
                                 <label>Mot de passe</label>
                                 <input type="password" id="register-password" placeholder="Min. 6 caractères">
                             </div>
-                            <button type="button" class="btn-primary" onclick="handleRegister()">Créer un compte</button>
+                            <button class="btn-primary" onclick="handleRegister()">S'inscrire</button>
+
+
+
                         </div>
                     </div>
                 </div>
             `;
+        
+            
         }
 
-        function switchAuthTab(tab) {
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.tab')[tab === 'login' ? 0 : 1].classList.add('active');
-            document.getElementById('login-form').classList.toggle('hidden', tab !== 'login');
-            document.getElementById('register-form').classList.toggle('hidden', tab !== 'register');
+        // Event delegation pour les boutons S'inscrire
+document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('btn-register')) {
+        const eventId = e.target.getAttribute('data-event-id');
+   
+    }
+});
+
+async function handleEventRegister(eventId) {
+    console.log('📤 Tentative d\'inscription à l\'événement', eventId);
+    
+    const token = localStorage.getItem('token');
+    console.log('Token:', token ? '✅ Présent' : '❌ Manquant');
+
+    if (!token) {
+        alert('Veuillez vous connecter d\'abord');
+        return;
+    }
+
+    try {
+        console.log('🔄 Envoi de la requête...');
+        const response = await fetch('http://localhost:3001/api/events/' + eventId + '/register', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + token
+            },
+            body: JSON.stringify({ phone: '' })
+        });
+
+        console.log('✅ Réponse reçue:', response.status, response.statusText);
+        const data = await response.json();
+        console.log('📦 Données:', data);
+
+        if (response.ok) {
+            alert('✅ Inscription réussie !');
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            alert('❌ Erreur: ' + (data.error || data.message));
         }
+    } catch (error) {
+        console.error('❌ Erreur complète:', error);
+        alert('Erreur: ' + error.message);
+    }
+}
 
-        async function handleLogin() {
-            const email = document.getElementById('login-email').value;
-            const password = document.getElementById('login-password').value;
 
-            if (!email || !password) {
-                showAlert('Veuillez remplir tous les champs', 'error');
-                return;
-            }
 
-            try {
-                const response = await fetch(`${API_BASE_URL}/auth/login`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, password })
-                });
-
-                const data = await response.json();
-
-                if (response.ok) {
-                    authToken = data.token;
-                    currentUser = data.user;
-                    localStorage.setItem('authToken', authToken);
-                    localStorage.setItem('currentUser', JSON.stringify(currentUser));
-                    showAlert(`Bienvenue ${currentUser.name}!`, 'success');
-                    setTimeout(() => {
-                        renderApp();
-                        allEvents = [...mockEvents];
-                        renderEvents();
-                    }, 500);
-                } else {
-                    showAlert(data.message || 'Erreur de connexion', 'error');
-                }
-            } catch (error) {
-                showAlert('Erreur de connexion au serveur', 'error');
-            }
-        }
 
         async function handleRegister() {
             const name = document.getElementById('register-name').value;
@@ -1524,7 +1534,9 @@
                                                 </div>
                                             </div>
                                             ${event.description ? `<div class="event-description-pro"><p>${event.description}</p></div>` : ''}
-                                            <button class="btn-register" onclick="handleRegister(${event.id})">✨ S'inscrire</button>
+                                            <button class="btn-register" data-event-id="${event.id}">🌟 S'inscrire</button>
+
+
                                         </div>
                                     `;
                                 }).join('')}
@@ -2076,6 +2088,7 @@
         function openCreateEvent() {
             document.getElementById('createEventModal').style.display = 'block';
         }
+        
 
         async function handleCreateEvent(e) {
             e.preventDefault();
@@ -2192,7 +2205,23 @@
             selectedFilter = 'Tous';
             searchQuery = '';
             renderAuth();
-        }
+        }  
     </script>
+
+
+
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('btn-register')) {
+            const eventId = e.target.getAttribute('data-event-id');
+            console.log('Bouton cliqué, eventId:', eventId);
+            handleEventRegister(eventId);
+        }
+    });
+});
+</script>
+
 </body>
 </html>
